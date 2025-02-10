@@ -29,8 +29,18 @@ function Remove-ExtraLanguages {
     Get-ChildItem -Path $mainPath -File | Remove-Item
 }
 
+#OnePace Dubbed videos already include on-screen text subs, we can remove those subs
+function Remove-OnePaceSubs {
+    param (
+        # Location of One Pace/Muhn Pace videos
+        [Parameter(Mandatory)]
+        [string]
+        $videoPath
+    )
 
+    Get-ChildItem -Path $videoPath -File -Recurse | Where-Object {($_.Name -notlike "[Muhn Pace]") -and ($_.Extension -ne ".ass")}
+    
+}
 
-
-
+Remove-OnePaceSubs
 #Remove-ExtraLanguages
