@@ -38,8 +38,21 @@ function Remove-OnePaceSubs {
         $videoPath
     )
 
-    Get-ChildItem -Path $videoPath -File -Recurse | Where-Object {($_.Name -notlike "[Muhn Pace]") -and ($_.Extension -ne ".ass")}
-    
+    #get sub files from working directory
+    $subFiles = Get-ChildItem -Path $mainPath -File -Recurse | Where-Object {($_.Extension -eq ".ass")}
+
+    #Get all "official" One Pace files
+    $onePaceEps = Get-ChildItem -Path $videoPath -File -Recurse | Where-Object {($_.Name -like "*One*") -and ($_.Extension -eq ".mp4")}
+
+    #loop through One Pace eps and remove matching subtitle files
+    foreach ($opEp in $onePaceEps) {
+        $epNum = $opEp.Name.Substring(10,($opEp.Name.IndexOf(']',10))) #grab identifier to link video file to sub file, ie [OnePace][1060-1063]
+        foreach ($file in $subFiles) {
+            if ($file.Name -like "$epNum") {
+                Remove-Item -LiteralPath $file.FullName
+            }
+        }
+    }
 }
 
 Remove-OnePaceSubs
