@@ -101,7 +101,7 @@ function Sync-FileNames {
             $epName = $mpEp.BaseName.Substring($start) #isolate ep title
 
             if ($subName -eq $epName) {
-                $newName = $mpEp.BaseName + ".ass" #generate new subtitle file name to match video file name
+                $newName = $mpEp.BaseName + ".forced.ass" #generate new subtitle file name to match video file name
                 Rename-Item -LiteralPath $file.FullName -NewName $newName
             }
         }
