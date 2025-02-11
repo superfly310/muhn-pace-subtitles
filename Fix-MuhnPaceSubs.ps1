@@ -110,6 +110,12 @@ function Sync-FileNames {
 
 }
 
+#todo
+#add feature to move completed subs to video directory
+#gen simple interface
+#gen forced subtitles for plex
+#handle different regions
+
 Sync-FileNames
 #Remove-OnePaceSubs
 #Remove-ExtraLanguages
