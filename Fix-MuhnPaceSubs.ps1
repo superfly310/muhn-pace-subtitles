@@ -30,13 +30,23 @@ function Remove-ExtraLanguages {
 }
 
 #OnePace Dubbed videos already include on-screen text subs, we can remove those subs
+#This function does not behave as well as I hoped to remove One Pace dubbed files. Algorithm needs to be re-thought
 function Remove-OnePaceSubs {
     param (
         # Location of One Pace/Muhn Pace videos
         [Parameter(Mandatory)]
         [string]
-        $videoPath
+        $videoPath,
+        # Location of Sub files
+        [Parameter()]
+        [string]
+        $mainPath
     )
+
+    #check if $mainPath was provided, set to default if not
+    if ($null -eq $mainPath) {
+        $mainPath = Join-Path -Path $PSScriptRoot -ChildPath "main"
+    }
 
     #get sub files from working directory
     $subFiles = Get-ChildItem -Path $mainPath -File -Recurse | Where-Object {($_.Extension -eq ".ass")}
@@ -46,14 +56,59 @@ function Remove-OnePaceSubs {
 
     #loop through One Pace eps and remove matching subtitle files
     foreach ($opEp in $onePaceEps) {
-        $epNum = $opEp.Name.Substring(10,($opEp.Name.IndexOf(']',10))) #grab identifier to link video file to sub file, ie [OnePace][1060-1063]
+        $epNum = $opEp.Name.Substring(11,($opEp.Name.IndexOf(']',10)-11)) #isolate chapter number from title. Char 11 to second ]. Get difference for length
+        Write-host $epNum
         foreach ($file in $subFiles) {
-            if ($file.Name -like "$epNum") {
-                Remove-Item -LiteralPath $file.FullName
+            $fileNum = $file.Name.Substring(11,($file.Name.IndexOf(']',10)-11))
+            
+            if ($fileNum -eq $epNum) {
+                Remove-Item -LiteralPath $file.FullName -Force
             }
         }
     }
 }
 
-Remove-OnePaceSubs
+function Sync-FileNames {
+    param (
+        # Video File location
+        [Parameter(Mandatory)]
+        [string]
+        $videoPath,
+        # Subtitle file path, will be set to default location if not passed
+        [Parameter()]
+        [string]
+        $mainpath
+    )
+
+    #check if $mainPath was provided, set to default if not
+    if ($null -eq $mainPath) {
+        $mainPath = Join-Path -Path $PSScriptRoot -ChildPath "main"
+    }
+    
+    #get sub files from working directory
+    $subFiles = Get-ChildItem -Path $mainPath -File -Recurse | Where-Object {($_.Extension -eq ".ass")}
+
+    #Get all Muhn Pace files
+    $muhnPaceEps = Get-ChildItem -Path $videoPath -File -Recurse | Where-Object {($_.Name -like "*Muhn*") -and ($_.Extension -eq ".mp4")}
+    
+    foreach ($file in $subFiles) {
+        $start = $file.Name.IndexOf(']',10)+2 #Name start point
+        $length = $file.Name.IndexOf('[',$start) - $start #length of full name
+        $subName = $file.Name.Substring($start,$length-1) #isolate sub ep title. Char 11 to second ]
+
+        foreach ($mpEp in $muhnPaceEps) {
+            $start = $mpEp.BaseName.IndexOf(']')+2 #Name start point
+            $epName = $mpEp.BaseName.Substring($start) #isolate ep title
+
+            if ($subName -eq $epName) {
+                Rename-Item -LiteralPath $file.FullName -NewName $mpEp.BaseName
+            }
+        }
+
+    }
+
+}
+
+Sync-FileNames
+#Remove-OnePaceSubs
 #Remove-ExtraLanguages
